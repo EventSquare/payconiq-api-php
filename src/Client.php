@@ -2,14 +2,18 @@
 
 namespace Payconiq;
 
+use Payconiq\Support\Exceptions\CreateTransactionFailedException;
+use Payconiq\Support\Exceptions\RetrieveTransactionFailedException;
+
 class Client
 {
 	
 	protected $merchant_id;
 	protected $access_token;
+	protected $testmode;
 	protected $endpoint = [
-		'live' => 'https://api.payconiq.com/v2/transactions',
-		'test' => 'https://dev.payconiq.com/v2/transactions'
+		'live' => 'https://api.payconiq.com/v2',
+		'test' => 'https://dev.payconiq.com/v2'
 	];
 	
 	/**
@@ -17,25 +21,29 @@ class Client
 	 *
 	 * @param  string $merchent_id  The merchant ID registered with Payconiq.
 	 * @param  string $access_token  Used to secure request between merchant backend and Payconiq backend.
+	 * @param  bool $testmode  Should we enable testmode.
 	 * 
 	 * @return void
 	 */
-	public function __construct($merchant_id=null, $access_token=null)
+	public function __construct($merchant_id = null, $access_token = null, $testmode = false)
 	{
-		$this->merchant_id = $merchant_id;
-		$this->access_token = $access_token;
-	}	
+		$this->merchant_id = $merchant_id ?: config('payconiq.merchant_id');
+		$this->access_token = $access_token ?: config('payconiq.access_token');
+		$this->testmode = (BOOL)$testmode;
+	}
 
 	/**
 	 * Set the merchant id
 	 *
 	 * @param  string $merchent_id  The merchant ID registered with Payconiq.
 	 *
-	 * @return void
+	 * @return self
 	 */
 	public function setMerchantId($merchant_id)
 	{
 		$this->merchant_id = $merchant_id;
+
+		return $this;
 	}
 
 	/**
@@ -43,57 +51,108 @@ class Client
 	 *
 	 * @param  string $access_token  Used to secure request between merchant backend and Payconiq backend.
 	 *
-	 * @return void
+	 * @return self
 	 */
 	public function setAccessToken($access_token)
 	{
 		$this->access_token = $access_token;
+
+		return $this;
+	}
+
+	/**
+	 * Enable testmode
+	 * 
+	 * @param boolean $testmode
+	 *
+	 * @return self
+	 */
+	public function setTestmode($testmode)
+	{
+		$this->testmode = (BOOL)$testmode;
+
+		return $this;
 	}
 
 	/**
 	 * Create a new transaction
 	 * 
-	 * @param  string $amount  Transaction amount in cents
+	 * @param  float $amount  Transaction amount in cents
 	 * @param  string $currency  Amount currency
-	 * @param  string $callbackURL  Callback where payconiq needs to send confirmation status
+	 * @param  string $callbackUrl  Callback where payconiq needs to send confirmation status
 	 * 
-	 * @return string transactionid
+	 * @return string  transaction_id
+	 * @throws CreateTransactionFailedException  If the response has no transactionid
 	 */
-	public function createTransaction($amount, $currency, $callbackURL)
+	public function createTransaction($amount, $currency, $callbackUrl)
 	{
+		$response = $this->curl('POST', $this->getEndpoint('/transactions'), $this->constructHeaders(), [
+			'amount' => $amount,
+			'currency' => $currency,
+			'callbackUrl' => $callbackUrl,
+		]);
 
+		if(empty($response['transactionId']))
+			throw new CreateTransactionFailedException($response['message']);
+
+		return $response['transactionId'];
 	}
 
 	/**
-	 * Webhook
+	 * Retrieve an existing transaction
 	 *
-	 * TIMEDOUT: If a user for some reason didn't pay after 2 minutes.
-	 * CANCELED: user can just cancel a transaction after scanning it.
-	 * FAILED: something went wrong during the payment process (wrong PIN provided by a user).
-	 * SUCCEEDED: A transaction was confirmed by the user
-	 * 
-	 * @return json
+	 * @param  string $transaction_id  The transaction id provided by Payconiq
+	 *
+	 * @return  array  Response object by Payconiq
 	 */
-	public function webhook()
+	public function retrieveTransaction($transaction_id)
 	{
+		$response = $this->curl('GET', $this->getEndpoint('/transactions/'.$transaction_id), $this->constructHeaders());
 
+		if(empty($response['_id']))
+			throw new RetrieveTransactionFailedException($response['message']);
+
+		return $response;
 	}
 
 	/**
-	 * Validate the response
+	 * Get the endpoint for the call
+	 *
+	 * @param  string $route
 	 */
-	private function validateResponse($code)
+	private function getEndpoint($route = null)
 	{
-		// 200, 4OO, 500
+		return $this->endpoint[$this->testmode ? 'test' : 'live'] . $route;
 	}
 
+	/**
+	 * Construct the headers for the cURL call
+	 * 
+	 * @return array
+	 */
+	private function constructHeaders()
+	{
+		return [
+			'Content-Type: application/json',
+			'Authorization: '.$this->access_token,
+		];
+	}
+	
 	/**
     * cURL request
+    *
+    * @param  string $method
+    * @param  string $url
+    * @param  array $headers
+    * @param  array $parameters
+    *
+    * @return response
     */
-    private function cURL($type,$method,$headers,$params=[])
+    private function cURL($method, $url, $headers=[], $parameters=[])
     {
         $curl = curl_init();
-        curl_setopt($curl, CURLOPT_URL, $method);
+
+        curl_setopt($curl, CURLOPT_URL, $url);
         curl_setopt($curl, CURLOPT_VERBOSE, 0);
         curl_setopt($curl, CURLOPT_HEADER, 1);
         curl_setopt($curl, CURLOPT_CONNECTTIMEOUT ,20);
@@ -101,20 +160,15 @@ class Client
         curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($curl, CURLOPT_BINARYTRANSFER, true);
-        curl_setopt($curl, CURLOPT_CUSTOMREQUEST, strtoupper($type));
-        curl_setopt($curl, CURLOPT_POSTFIELDS, $this->bindPostFields($params));
+        curl_setopt($curl, CURLOPT_CUSTOMREQUEST, $method);
+        curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($parameters));
 
         $response = curl_exec($curl);
         $header_size = curl_getinfo($curl, CURLINFO_HEADER_SIZE);
-        // Service unavailable
-        $code = curl_getinfo($curl,CURLINFO_HTTP_CODE) > 0 ? curl_getinfo($curl,CURLINFO_HTTP_CODE) : 503;
         $body = substr($response, $header_size);
         curl_close($curl);
 
-        return [
-            'code' => $code,
-            'body' => $this->decryptData($body),
-        ];
+        return json_decode($body,true);
     }
 
 }

@@ -14,7 +14,9 @@ class PayconiqServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        //
+        $this->publishes([
+            __DIR__.'/PayconiqSettings.php' => config_path('payconiq.php'),
+        ]);
     }
 
     /**
