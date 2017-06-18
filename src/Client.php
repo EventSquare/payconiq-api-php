@@ -10,26 +10,34 @@ class Client
 	
 	protected $merchant_id;
 	protected $access_token;
-	protected $testmode;
-	protected $endpoint = [
-		'live' => 'https://api.payconiq.com/v2',
-		'test' => 'https://dev.payconiq.com/v2'
-	];
+	protected $endpoint = 'https://api.payconiq.com/v2';
 	
 	/**
 	 * Construct
 	 *
 	 * @param  string $merchent_id  The merchant ID registered with Payconiq.
 	 * @param  string $access_token  Used to secure request between merchant backend and Payconiq backend.
-	 * @param  bool $testmode  Should we enable testmode.
 	 * 
 	 * @return void
 	 */
-	public function __construct($merchant_id = null, $access_token = null, $testmode = false)
+	public function __construct($merchant_id = null, $access_token = null)
 	{
 		$this->merchant_id = $merchant_id ?: config('payconiq.merchant_id');
 		$this->access_token = $access_token ?: config('payconiq.access_token');
-		$this->testmode = (BOOL)$testmode;
+	}
+
+	/**
+	 * Set the endpoint
+	 *
+	 * @param  string $url  The endpoint of the Payconiq API.
+	 *
+	 * @return self
+	 */
+	public function setEndpoint($url)
+	{
+		$this->endpoint = $url;
+
+		return $this;
 	}
 
 	/**
@@ -56,20 +64,6 @@ class Client
 	public function setAccessToken($access_token)
 	{
 		$this->access_token = $access_token;
-
-		return $this;
-	}
-
-	/**
-	 * Enable testmode
-	 * 
-	 * @param boolean $testmode
-	 *
-	 * @return self
-	 */
-	public function setTestmode($testmode)
-	{
-		$this->testmode = (BOOL)$testmode;
 
 		return $this;
 	}
@@ -122,7 +116,7 @@ class Client
 	 */
 	private function getEndpoint($route = null)
 	{
-		return $this->endpoint[$this->testmode ? 'test' : 'live'] . $route;
+		return $this->endpoint . $route;
 	}
 
 	/**
