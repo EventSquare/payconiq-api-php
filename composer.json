@@ -1,0 +1,11 @@
+{
+    "name": "eventsquare/payconiq",
+    "description": "Payconiq API client for PHP",
+    "authors": [
+        {
+            "name": "Glenn Engelen",
+            "email": "glenn.engelen@eventsquare.co"
+        }
+    ],
+    "require": {}
+}
