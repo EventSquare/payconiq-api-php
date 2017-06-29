@@ -26,6 +26,6 @@ class PayconiqServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        App::bind('payconiq', function() { return new \Payconiq\Client; });
+        App::bind('payconiq', function() { return new \Payconiq\Client(config('payconiq.merchant_id'), config('payconiq.access_token')); });
     }
 }

@@ -22,8 +22,8 @@ class Client
 	 */
 	public function __construct($merchant_id = null, $access_token = null)
 	{
-		$this->merchant_id = $merchant_id ?: config('payconiq.merchant_id');
-		$this->access_token = $access_token ?: config('payconiq.access_token');
+		$this->merchant_id = $merchant_id;
+		$this->access_token = $access_token;
 	}
 
 	/**
@@ -102,7 +102,7 @@ class Client
 	public function retrieveTransaction($transaction_id)
 	{
 		$response = $this->curl('GET', $this->getEndpoint('/transactions/'.$transaction_id), $this->constructHeaders());
-
+		
 		if(empty($response['_id']))
 			throw new RetrieveTransactionFailedException($response['message']);
 
