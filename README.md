@@ -1,4 +1,4 @@
-![Payconiq](https://s3-eu-west-1.amazonaws.com/eventsquare.assets/ext/payconiq_logo.png) 
+<img src="https://s3-eu-west-1.amazonaws.com/eventsquare.assets/ext/payconiq_logo.png" alt="Payconiq" width="300"/>
 
 # Payconiq API client for PHP #
 
