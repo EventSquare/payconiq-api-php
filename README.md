@@ -15,7 +15,7 @@ To use the Payconiq API client, the following things are required:
 
 The best way to install the Payconiq API client is to require it with [Composer](http://getcomposer.org/doc/00-intro.md).
 
-    $ composer require eventsquare/payconiq-api-php
+    $ composer require eventsquare/payconiq
 
 You may also git checkout or [download all the files](https://github.com/EventSquare/payconiq-api-php/archive/master.zip), and include the Payconiq API client manually.
 
