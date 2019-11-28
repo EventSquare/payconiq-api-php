@@ -10,7 +10,7 @@ class Client
 	
 	protected $merchant_id;
 	protected $access_token;
-	protected $endpoint = 'https://api.payconiq.com/v2';
+	protected $endpoint = 'https://api.payconiq.com/v3';
 	
 	/**
 	 * Construct
@@ -80,7 +80,7 @@ class Client
 	 */
 	public function createTransaction($amount, $currency, $callbackUrl)
 	{
-		$response = $this->curl('POST', $this->getEndpoint('/transactions'), $this->constructHeaders(), [
+		$response = $this->curl('POST', $this->getEndpoint('/payments'), $this->constructHeaders(), [
 			'amount' => $amount,
 			'currency' => $currency,
 			'callbackUrl' => $callbackUrl,
@@ -101,7 +101,7 @@ class Client
 	 */
 	public function retrieveTransaction($transaction_id)
 	{
-		$response = $this->curl('GET', $this->getEndpoint('/transactions/'.$transaction_id), $this->constructHeaders());
+		$response = $this->curl('GET', $this->getEndpoint('/payments/'.$transaction_id), $this->constructHeaders());
 		
 		if(empty($response['_id']))
 			throw new RetrieveTransactionFailedException($response['message']);
