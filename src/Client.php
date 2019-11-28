@@ -102,8 +102,8 @@ class Client
 	public function retrieveTransaction($transaction_id)
 	{
 		$response = $this->curl('GET', $this->getEndpoint('/payments/'.$transaction_id), $this->constructHeaders());
-		
-		if(empty($response['_id']))
+
+		if(empty($response['paymentId']))
 			throw new RetrieveTransactionFailedException($response['message']);
 
 		return $response;
