@@ -10,22 +10,32 @@ use Payconiq\Support\Exceptions\RetrieveTransactionFailedException;
 class Client
 {
 
+	const ENVIRONMENT_PROD = 'prod';
+	const ENVIRONMENT_EXT = 'ext';
+
 	protected $merchantId;
+	/**
+	 * @deprecated
+	 */
 	protected $accessToken;
-	protected $endpoint = 'https://api.payconiq.com/v3';
+	protected $apiKey;
+	protected $endpoint;
 
 	/**
 	 * Construct
 	 *
-	 * @param  string $merchantId  The merchant ID registered with Payconiq.
-	 * @param  string $accessToken  Used to secure request between merchant backend and Payconiq backend.
+	 * @param  string $merchantId	The merchant ID registered with Payconiq.
+	 * @param  string $accessToken  Used to secure request between merchant backend and Payconiq backend (deprecated: use $apiKey instead).
+	 * @param  string $apiKey		Used to secure request between merchant backend and Payconiq backend.
 	 * 
 	 * @return void
 	 */
-	public function __construct($merchantId = null, $accessToken = null)
+	public function __construct($merchantId = null, $accessToken = null, $apiKey = null, $environment = self::ENVIRONMENT_PROD)
 	{
 		$this->merchantId = $merchantId;
 		$this->accessToken = $accessToken;
+		$this->apiKey = $apiKey;
+		$this->endpoint = $environment == self::ENVIRONMENT_PROD ? 'https://api.payconiq.com/v3' : 'https://api.ext.payconiq.com/v3';
 	}
 
 	/**
@@ -62,6 +72,9 @@ class Client
 	 * @param  string $accessToken  Used to secure request between merchant backend and Payconiq backend.
 	 *
 	 * @return self
+	 * 
+	 * @deprecated Use setApiKey instead
+	 * @see setApiKey
 	 */
 	public function setAccessToken($accessToken)
 	{
@@ -71,10 +84,24 @@ class Client
 	}
 
 	/**
+	 * Set the API key
+	 *
+	 * @param  string $apiKey  Used to secure request between merchant backend and Payconiq backend.
+	 *
+	 * @return self
+	 */
+	public function setApiKey($apiKey)
+	{
+		$this->apiKey = $apiKey;
+
+		return $this;
+	}
+
+	/**
 	 * Create a new transaction
 	 * 
-	 * @param  float $amount  Transaction amount in cents
-	 * @param  string $currency  Amount currency
+	 * @param  float $amount		Transaction amount in cents
+	 * @param  string $currency		Amount currency
 	 * @param  string $callbackUrl  Callback where payconiq needs to send confirmation status
 	 * 
 	 * @return string  transaction_id
@@ -100,12 +127,12 @@ class Client
 	/**
 	 * Create a new payment
 	 * 
-	 * @param  float $amount  Payment amount in cents
-	 * @param  string $currency  Payment currency code in IOS 4217 format
-	 * @param  string $reference External payment reference used to reference the Payconiq payment in the calling party's system
+	 * @param  float $amount		Payment amount in cents
+	 * @param  string $currency		Payment currency code in IOS 4217 format
+	 * @param  string $reference	External payment reference used to reference the Payconiq payment in the calling party's system
 	 * @param  string $callbackUrl  A url to which the merchant or partner will be notified of a payment
 	 * 
-	 * @return string  paymentId
+	 * @return object  payment object
 	 * @throws CreatePaymentFailedException  If the response has no transactionid
 	 */
 	public function createPayment($amount, $currency = 'EUR', $reference, $callbackUrl)
@@ -120,7 +147,7 @@ class Client
 		if (empty($response['paymentId']))
 			throw new CreatePaymentFailedException($response['message']);
 
-		return $response['paymentId'];
+		return $response;
 	}
 
 	/**
@@ -179,7 +206,7 @@ class Client
 	{
 		return [
 			'Content-Type: application/json',
-			'Authorization: ' . $this->accessToken,
+			'Authorization: ' . (!is_null($this->apiKey) ? $this->apiKey : $this->accessToken)
 		];
 	}
 
@@ -193,7 +220,7 @@ class Client
 	 *
 	 * @return response
 	 */
-	private function cURL($method, $url, $headers = [], $parameters = [])
+	private static function cURL($method, $url, $headers = [], $parameters = [])
 	{
 		$curl = curl_init();
 
@@ -213,6 +240,6 @@ class Client
 		$body = substr($response, $header_size);
 		curl_close($curl);
 
-		return json_decode($body, true);
+		return json_decode($body);
 	}
 }
