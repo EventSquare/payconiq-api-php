@@ -27,6 +27,7 @@ class Client
 	 * @param  string $merchantId	The merchant ID registered with Payconiq.
 	 * @param  string $accessToken  Used to secure request between merchant backend and Payconiq backend (deprecated: use $apiKey instead).
 	 * @param  string $apiKey		Used to secure request between merchant backend and Payconiq backend.
+	 * @param  string $environment	Environment to use when making API calls
 	 * 
 	 * @return void
 	 */
