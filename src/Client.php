@@ -6,6 +6,7 @@ use Payconiq\Support\Exceptions\CreateTransactionFailedException;
 use Payconiq\Support\Exceptions\CreatePaymentFailedException;
 use Payconiq\Support\Exceptions\GetPaymentDetailsFailedException;
 use Payconiq\Support\Exceptions\RetrieveTransactionFailedException;
+use Payconiq\Support\Exceptions\GetPaymentsListFailedException;
 
 class Client
 {
@@ -119,8 +120,8 @@ class Client
 			'callbackUrl' => $callbackUrl,
 		]);
 
-		if (empty($response['transactionId']))
-			throw new CreateTransactionFailedException($response['message']);
+		if (empty($response->transactionId))
+			throw new CreateTransactionFailedException($response->message);
 
 		return $response['transactionId'];
 	}
@@ -145,8 +146,8 @@ class Client
 			'callbackUrl' => $callbackUrl,
 		]);
 
-		if (empty($response['paymentId']))
-			throw new CreatePaymentFailedException($response['message']);
+		if (empty($response->paymentId))
+			throw new CreatePaymentFailedException($response->message);
 
 		return $response;
 	}
@@ -156,7 +157,7 @@ class Client
 	 *
 	 * @param  string $transactionId  The transaction id provided by Payconiq
 	 *
-	 * @return  array  Response object by Payconiq
+	 * @return  object  Response object by Payconiq
 	 * 
 	 * @deprecated Use getPaymentDetails instead
 	 * @see getPaymentDetails
@@ -165,8 +166,8 @@ class Client
 	{
 		$response = $this->curl('GET', $this->getEndpoint('/payments/' . $transactionId), $this->constructHeaders());
 
-		if (empty($response['paymentId']))
-			throw new RetrieveTransactionFailedException($response['message']);
+		if (empty($response->paymentId))
+			throw new RetrieveTransactionFailedException($response->message);
 
 		return $response;
 	}
@@ -176,16 +177,35 @@ class Client
 	 *
 	 * @param  string $paymentId  The unique Payconiq identifier of a payment as provided by the create payment service
 	 *
-	 * @return  array  Response object by Payconiq
+	 * @return  object  Response object by Payconiq
 	 */
 	public function getPaymentDetails($paymentId)
 	{
 		$response = $this->curl('GET', $this->getEndpoint('/payments/' . $paymentId), $this->constructHeaders());
 
-		if (empty($response['paymentId']))
-			throw new GetPaymentDetailsFailedException($response['message']);
+		if (empty($response->paymentId))
+			throw new GetPaymentDetailsFailedException($response->message);
 
 		return $response;
+	}
+
+	/**
+	 * Get payments list
+	 *
+	 * @param  string $reference	External payment reference used to reference the Payconiq payment in the calling party's system
+	 * 
+	 * @return  array  Response objects by Payconiq
+	 */
+	public function getPaymentsList($reference)
+	{
+		$response = $this->curl('POST', $this->getEndpoint('/payments/search'), $this->constructHeaders(), [
+			'reference' => $reference
+		]);
+
+		if (empty($response->size))
+			throw new GetPaymentsListFailedException($response->message);
+
+		return $response->details;
 	}
 
 	/**
