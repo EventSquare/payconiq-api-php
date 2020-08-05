@@ -7,7 +7,7 @@ Accepting [Payconiq](https://www.payconiq.com/) payments with the use of the QR 
 ## Requirements ##
 To use the Payconiq API client, the following things are required:
 
-+ Payconiq Merchant Id and Access Token
++ Payconiq Merchant Id and API key
 + PHP >= 5.6
 + PHP cURL extension
 
@@ -26,8 +26,8 @@ You may also git checkout or [download all the files](https://github.com/EventSq
 We use the following parameters in the examples below:
 
 ```php
-$merchant_id = ''; // The merchant ID registered with Payconiq.
-$access_token = ''; // Used to secure request between merchant backend and Payconiq backend.
+$merchantId = 'abc'; // The merchant ID registered with Payconiq.
+$apiKey = 'apiKey 123456'; // Used to secure request between merchant backend and Payconiq backend.
 
 $amount = 1000; // Transaction amount in cents
 $currency = 'EUR'; // Currency
@@ -39,30 +39,30 @@ To learn more about how, when and what Payconiq  will POST to your callbackUrl, 
 ## Usage ##
 
 
-### Create a transaction ###
+### Create a payment ###
 
 
 ```php
 use Payconiq\Client;
 
-$payconiq = new Client($merchant_id, $access_token);
+$payconiq = new Client($merchantId, $apiKey);
 	
-// Create a new transaction
-$transaction_id = $payconiq->createTransaction($amount, $currency, $callbackUrl);
+// Create a new payment
+$payment = $payconiq->createPayment($amount, $currency, $reference, $callbackUrl);
 	
 // Assemble QR code content
-$qrcode = 'https://payconiq.com/pay/1/' . $transaction_id;
+$qrcode = $payment->_links->qrcode->href;
 ```
 
-### Retrieve a transaction ###
+### Retrieve a payment ###
 
 ```php
 use Payconiq\Client;
 
-$payconiq = new Client($merchant_id, $access_token);
+$payconiq = new Client($merchantId, $accessToken);
 
-// Retrieve a transaction
-$transaction = $payconiq->retrieveTransaction($transaction_id);
+// Retrieve a payment
+$payment = $payconiq->retrievePayment($paymentId);
 ```
 	
 ## Laravel support ##
@@ -88,21 +88,21 @@ Publish the Payconiq config file with the artisan command and fill in your crede
 php artisan vendor:publish
 ```
 	
-### Create a transaction ###
+### Create a payment ###
 ```php
 use Payconiq;
 
-// Create a new transaction
-$transaction_id = Payconiq::createTransaction($amount, $currency, $callbackUrl);
+// Create a new payment
+$payment = Payconiq::createPayment($amount, $currency, $reference, $callbackUrl);
 	
 // Assemble QR code content
-$qrcode = 'https://payconiq.com/pay/1/' . $transaction_id;
+$qrcode = $payment->_links->qrcode->href;
 ```	
 	
-### Retrieve a transaction ###
+### Retrieve a payment ###
 ```php
 use Payconiq;
 
-// Retrieve a transaction
-$transaction = Payconiq::retrieveTransaction($transaction_id);
+// Retrieve a payment
+$payment = Payconiq::retrievePayment($payment);
 ```	
