@@ -48,7 +48,7 @@ use Payconiq\Client;
 $payconiq = new Client($merchantId, $apiKey);
 	
 // Create a new payment
-$payment = $payconiq->createPayment($amount, $currency, $callbackUrl);
+$payment = $payconiq->createPayment($amount, $currency, $reference, $callbackUrl);
 	
 // Assemble QR code content
 $qrcode = $payment->_links->qrcode->href;
@@ -93,7 +93,7 @@ php artisan vendor:publish
 use Payconiq;
 
 // Create a new payment
-$payment = Payconiq::createPayment($amount, $currency, $callbackUrl);
+$payment = Payconiq::createPayment($amount, $currency, $reference, $callbackUrl);
 	
 // Assemble QR code content
 $qrcode = $payment->_links->qrcode->href;
